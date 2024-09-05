@@ -1,9 +1,10 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 
 from notifications.models import Notification, Category, EmailLog
 
 
-class ReadOnlyAdmin(admin.ModelAdmin):
+class ReadOnlyAdmin(ModelAdmin):
 
     def has_add_permission(self, request):
         # Disable the ability to add new notification
@@ -25,5 +26,5 @@ class EmailLogAdmin(ReadOnlyAdmin):
 
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(ModelAdmin):
     list_display = ["content_type", "action"]
