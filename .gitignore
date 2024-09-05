@@ -1,0 +1,33 @@
+
+# Ignore virtual environment
+.venv/
+
+# Ignore database files
+*.sqlite3
+
+# Ignore environment variables
+.env
+
+# Ignore compiled Python files / django
+*.pyc
+*.pyo
+*.log
+__pycache__/
+
+# Ignore media files 
+/media/
+
+# Ignore static files (if not using a separate storage service)
+# /static/
+
+# Ignore unit test / coverage reports 
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# In macOS, .DS_Store stores custom attributes of its containing folder
+.DS_Store
+
+# Ignore Makefile
+Makefile
