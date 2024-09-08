@@ -1,4 +1,8 @@
 from django.contrib.auth.models import BaseUserManager
+from django.db import models
+from django.utils import timezone
+
+from notifications.models import Notification
 
 
 class UserManager(BaseUserManager):
@@ -41,3 +45,36 @@ class UserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self._create_user(email, password, **extra_fields)
+
+
+class SingleUseCodeManager(models.Manager):
+    """
+    Define a model manager for UseCodeManager model.
+    """
+
+    def create(self, **kwargs):
+
+        # Calculate the expiration time (15 minutes from now)
+        expiration_time = timezone.now() + timezone.timedelta(minutes=15)
+
+        # If a code already exists for this user, update it
+        single_use_code, created = self.model.objects.update_or_create(
+            defaults={
+                "code": self.generate_code(),
+                "expires_at": expiration_time,
+                "is_used": False,
+                **kwargs,
+            }
+        )
+
+        # Notify the user via email when a single-use code is created
+        Notification.objects.create(
+            user=single_use_code.user, content_object=single_use_code
+        )
+
+        return single_use_code
+
+    def generate_code(self):
+        import uuid
+
+        return uuid.uuid4()
