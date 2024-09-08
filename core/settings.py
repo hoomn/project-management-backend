@@ -31,6 +31,15 @@ ALLOWED_HOSTS = []
 # See https://docs.djangoproject.com/en/5.0/topics/auth/customizing/#auth-custom-user
 AUTH_USER_MODEL = "accounts.User"
 
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "accounts.auth_backends.SingleUseCodeBackend",
+]
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+]
+
 # Application definition
 
 INSTALLED_APPS = [
