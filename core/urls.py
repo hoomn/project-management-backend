@@ -24,6 +24,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.routers import DefaultRouter
 
 from accounts.views import UserViewSet
+from pm.views import DomainViewSet, ProjectViewSet, TaskViewSet, SubtaskViewSet
 
 admin.site.site_header = "PM Admin"
 admin.site.site_title = "Admin Portal"
@@ -32,6 +33,10 @@ admin.site.index_title = "PM"
 router = DefaultRouter()
 router.register(r"users", UserViewSet)
 
+router.register(r"domains", DomainViewSet)
+router.register(r"projects", ProjectViewSet)
+router.register(r"tasks", TaskViewSet)
+router.register(r"subtasks", SubtaskViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
