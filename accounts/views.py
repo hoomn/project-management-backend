@@ -21,11 +21,11 @@ class IsSelf(IsAuthenticated):
     """
 
     def has_object_permission(self, request, view, obj):
-        # Deny DELETE requests.
-        if request.method == "DELETE":
+        # Deny `DELETE` requests.
+        if request.method == HTTPMethod.DELETE:
             return False
 
-        # Allow the user to retrieve or update their own profile.
+        # Allow the user to `retrieve` or `update` their own profile.
         return obj == request.user
 
 
@@ -43,23 +43,20 @@ class UserViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def list(self, request):
-        serializer = BasicUserSerializer(self.queryset, many=True)
+        queryset = User.objects.all()
+        serializer = BasicUserSerializer(queryset, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=[HTTPMethod.POST])
     def request_single_use_code(self, request):
         email = request.data.get("email")
         if not email:
-            return Response(
-                {"error": "No email provided."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "No email provided."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             validate_email(email)
         except ValidationError:
-            return Response(
-                {"error": "Invalid email format."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Invalid email format."}, status=status.HTTP_400_BAD_REQUEST)
 
         email = email.lower()
 
@@ -77,9 +74,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
                 if recent_code.is_valid():
                     return Response(
-                        {
-                            "error": "Rate limit exceeded. Please try again in a few minutes."
-                        },
+                        {"error": "Rate limit exceeded. Please try again in a few minutes."},
                         status=status.HTTP_429_TOO_MANY_REQUESTS,
                     )
             except SingleUseCode.DoesNotExist:
@@ -89,9 +84,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         # Always return HTTP 200, regardless of whether the provided email is valid or not.
         return Response(
-            {
-                "message": "If we have your email address on file, you will receive a single-use code shortly."
-            },
+            {"message": "If we have your email address on file, you will receive a single-use code shortly."},
             status=status.HTTP_200_OK,
         )
 
@@ -100,9 +93,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         code = request.data.get("code")
         if not code:
-            return Response(
-                {"error": "No Code provided."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "No Code provided."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = authenticate(request, code=code)
         if not user:
