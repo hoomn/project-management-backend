@@ -3,9 +3,11 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.mixins import UpdateModelMixin
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import viewsets, status
+from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.models import User, AccessList, SingleUseCode
@@ -29,7 +31,7 @@ class IsSelf(IsAuthenticated):
         return obj == request.user
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
