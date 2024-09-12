@@ -1,13 +1,16 @@
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
-from rest_framework import viewsets
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
 from django.db.models import Q
 
 from .mixins import LoggingMixin
 from .models import Domain, Project, Task, Subtask
-from .serializers import DomainSerializer
-from .serializers import ProjectSerializer, TaskSerializer, SubtaskSerializer
+from .models import Comment, Attachment, Activity
+
+from .serializers import DomainSerializer, ProjectSerializer, TaskSerializer, SubtaskSerializer
+from .serializers import CommentSerializer, AttachmentSerializer, ActivitySerializer
 
 
 class IsOwnerOrReadOnly(IsAuthenticated):
@@ -25,7 +28,7 @@ class IsOwnerOrReadOnly(IsAuthenticated):
         return obj.created_by == request.user
 
 
-class DomainViewSet(viewsets.ModelViewSet):
+class DomainViewSet(ModelViewSet):
     queryset = Domain.objects.all()
     serializer_class = DomainSerializer
     permission_classes = [IsOwnerOrReadOnly]
@@ -37,7 +40,7 @@ class DomainViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ProjectViewSet(LoggingMixin, viewsets.ModelViewSet):
+class ProjectViewSet(LoggingMixin, ModelViewSet):
     """
     ViewSet for handling CRUD operations on Project model instances.
     Incorporates automatic logging of changes during updates via LoggingMixin,
@@ -49,9 +52,7 @@ class ProjectViewSet(LoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         current_user = self.request.user
-        queryset = Project.objects.filter(
-            domain__in=current_user.domain_membership.all()
-        )
+        queryset = Project.objects.filter(domain__in=current_user.domain_membership.all())
         return queryset
 
     @action(detail=True, methods=["get"])
@@ -64,21 +65,17 @@ class ProjectViewSet(LoggingMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="priority/choices")
     def priority_choices(self, request):
         choices = Project._meta.get_field("priority").choices
-        formatted_choices = [
-            {"value": choice[0], "label": choice[1]} for choice in choices
-        ]
+        formatted_choices = [{"value": choice[0], "label": choice[1]} for choice in choices]
         return Response(formatted_choices)
 
     @action(detail=False, methods=["get"], url_path="status/choices")
     def status_choices(self, request):
         choices = Project._meta.get_field("status").choices
-        formatted_choices = [
-            {"value": choice[0], "label": choice[1]} for choice in choices
-        ]
+        formatted_choices = [{"value": choice[0], "label": choice[1]} for choice in choices]
         return Response(formatted_choices)
 
 
-class TaskViewSet(LoggingMixin, viewsets.ModelViewSet):
+class TaskViewSet(LoggingMixin, ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -94,10 +91,7 @@ class TaskViewSet(LoggingMixin, viewsets.ModelViewSet):
         # Further filter by 'assigned_to' of task and subtasks if provided
         if assigned_to:
             tasks = (
-                tasks.filter(
-                    Q(assigned_to__id=assigned_to)
-                    | Q(subtasks__assigned_to__id=assigned_to)
-                )
+                tasks.filter(Q(assigned_to__id=assigned_to) | Q(subtasks__assigned_to__id=assigned_to))
                 .exclude(subtasks__status=Subtask.Status_Choices.DONE)
                 .distinct()
             )
@@ -125,7 +119,7 @@ class TaskViewSet(LoggingMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class SubtaskViewSet(LoggingMixin, viewsets.ModelViewSet):
+class SubtaskViewSet(LoggingMixin, ModelViewSet):
     queryset = Subtask.objects.all()
     serializer_class = SubtaskSerializer
     permission_classes = [IsAuthenticated]
@@ -137,3 +131,85 @@ class SubtaskViewSet(LoggingMixin, viewsets.ModelViewSet):
         subtasks = Subtask.objects.filter(assigned_to=user)
         serializer = self.get_serializer(subtasks, many=True)
         return Response(serializer.data)
+
+
+class CommentViewSet(LoggingMixin, ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsOwnerOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        content_type = self.request.query_params.get("content_type")
+        object_id = self.request.query_params.get("object_id")
+
+        if self.action == "list":
+            if content_type and object_id:
+                return queryset.filter(content_type=content_type, object_id=object_id)
+            # If content_type or object_id are missing for list action, return an empty queryset
+            return Comment.objects.none()
+
+        return queryset
+
+
+class AttachmentViewSet(LoggingMixin, ModelViewSet):
+    queryset = Attachment.objects.all()
+    serializer_class = AttachmentSerializer
+    permission_classes = [IsOwnerOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        content_type = self.request.query_params.get("content_type")
+        object_id = self.request.query_params.get("object_id")
+
+        if self.action == "list":
+            if content_type and object_id:
+                return queryset.filter(content_type=content_type, object_id=object_id)
+            # If content_type or object_id are missing for list action, return an empty queryset
+            return Attachment.objects.none()
+
+        return queryset
+
+
+class ActivityPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        return Response(
+            {
+                "count": self.page.paginator.count,
+                "num_pages": self.page.paginator.num_pages,
+                "number": self.page.number,
+                "next": self.page.next_page_number() if self.page.has_next() else None,
+                "previous": self.page.previous_page_number() if self.page.has_previous() else None,
+                "results": data,
+            }
+        )
+
+
+class ActivityViewSet(ReadOnlyModelViewSet):
+    queryset = Activity.objects.all()
+    serializer_class = ActivitySerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = ActivityPagination
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        content_type = self.request.query_params.get("content_type")
+        object_id = self.request.query_params.get("object_id")
+        if content_type and object_id:
+            queryset = queryset.filter(content_type=content_type, object_id=object_id)
+        return queryset
+
+    def paginate_queryset(self, queryset):
+        content_type = self.request.query_params.get("content_type")
+        object_id = self.request.query_params.get("object_id")
+
+        # Skip pagination if content_type and object_id are present
+        if content_type and object_id:
+            return None
+
+        # Otherwise, paginate as usual
+        return super().paginate_queryset(queryset)
