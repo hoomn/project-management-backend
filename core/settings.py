@@ -150,8 +150,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # DEVELOPMENT SETTINGS
 
-# Email Configuration
+# Email Configuration (dev)
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Email Configuration (peod)
+# EMAIL_BACKEND = "notifications.email_backends.SesEmailBackend"
+# AWS_SES_ACCESS_KEY = os.getenv("AWS_SES_ACCESS_KEY")
+# AWS_SES_SECRET_KEY = os.getenv("AWS_SES_SECRET_KEY")
+# AWS_SES_REGION_NAME = os.getenv("AWS_SES_REGION_NAME")
+
 
 # Global settings for REST framework API
 REST_FRAMEWORK = {
