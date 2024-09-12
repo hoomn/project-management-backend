@@ -12,19 +12,23 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-q=vq-ykp01m^ra$0gut!n2o4m+_b*w7*qzn$vs_k6f*aon(otb"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", False) == "True"
 
 ALLOWED_HOSTS = []
 
@@ -135,6 +139,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -163,3 +170,22 @@ SIMPLE_JWT = {
     # "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.CustomTokenObtainPairSerializer",
     "UPDATE_LAST_LOGIN": True,
 }
+
+
+ALLOWED_MIME_TYPES = [
+    # PDF
+    "application/pdf",
+    # Image
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    # Text
+    "text/plain",
+    "text/csv",
+    "application/rtf",
+    # .docx
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    # .xlsx
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]
