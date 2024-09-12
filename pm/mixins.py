@@ -94,6 +94,11 @@ class BaseItemMixin(TimestampMixin):
         return self.title.title()
 
     @property
+    def content_type(self):
+        content_type = ContentType.objects.get_for_model(self)
+        return content_type.id
+
+    @property
     def time_since_creation(self):
         return get_timesince(self.created_at)
 
@@ -139,16 +144,12 @@ class BaseItemMixin(TimestampMixin):
     def get_comment_count(self):
         Comment = apps.get_model("pm", "comment")
         content_type = ContentType.objects.get_for_model(self.__class__)
-        return Comment.objects.filter(
-            content_type=content_type, object_id=self.id
-        ).count()
+        return Comment.objects.filter(content_type=content_type, object_id=self.id).count()
 
     def get_attachment_count(self):
         Attachment = apps.get_model("pm", "attachment")
         content_type = ContentType.objects.get_for_model(self.__class__)
-        return Attachment.objects.filter(
-            content_type=content_type, object_id=self.id
-        ).count()
+        return Attachment.objects.filter(content_type=content_type, object_id=self.id).count()
 
 
 class BaseGenericMixin(TimestampMixin):
@@ -163,6 +164,7 @@ class BaseGenericMixin(TimestampMixin):
     )
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
+    is_updated = models.BooleanField(default=False)
     created_by = models.ForeignKey(
         USER,
         verbose_name="Created by",
@@ -202,123 +204,19 @@ class LoggingMixin:
     creates an Activity for each update.
     """
 
+    MAIN_CLASSES = ("Project", "Task", "Subtask")
+    GENERIC_CLASSES = ("Comment", "Attachment")
+
     def get_activity_model(self):
         return apps.get_model("pm", "activity")
-
-    def get_activity_serializer(self):
-        return import_string("pm.serializers.ActivitySerializer")
-
-    def get_comment_model(self):
-        return apps.get_model("pm", "comment")
-
-    def get_comment_serializer(self):
-        return import_string("pm.serializers.CommentSerializer")
-
-    def get_attachment_model(self):
-        return apps.get_model("pm", "attachment")
-
-    def get_attachment_serializer(self):
-        return import_string("pm.serializers.AttachmentSerializer")
 
     def get_notification_model(self):
         return apps.get_model("notifications", "notification")
 
-    @action(detail=True, methods=["get"])
-    def activities(self, request, pk=None):
-
-        Activity = self.get_activity_model()
-        ActivitySerializer = self.get_activity_serializer()
-
-        instance = self.get_object()
-        content_type = ContentType.objects.get_for_model(instance)
-
-        if request.method == "GET":
-            activities = Activity.objects.filter(
-                content_type=content_type, object_id=instance.id
-            )
-            serializer = ActivitySerializer(activities, many=True)
-            return Response(serializer.data)
-
-    @action(detail=True, methods=["get", "post"])
-    def comments(self, request, pk=None):
-
-        Comment = self.get_comment_model()
-        CommentSerializer = self.get_comment_serializer()
-
-        instance = self.get_object()
-        content_type = ContentType.objects.get_for_model(instance)
-
-        if request.method == "GET":
-            comments = Comment.objects.filter(
-                content_type=content_type, object_id=instance.id
-            )
-            serializer = CommentSerializer(comments, many=True)
-            return Response(serializer.data)
-
-        if request.method == "POST":
-            serializer = CommentSerializer(data=request.data)
-            if serializer.is_valid():
-                comment = serializer.save(
-                    content_type=content_type,
-                    object_id=instance.id,
-                    created_by=request.user,
-                )
-
-                change_message = [
-                    {
-                        "field": "comments",
-                        "verbose_name": "Comments",
-                        "old_value": [],
-                        "new_value": [str(comment)],
-                    }
-                ]
-                self.log_change(self.request, instance, change_message)
-
-                return Response(serializer.data, status=201)
-            return Response(serializer.errors, status=400)
-
-    @action(detail=True, methods=["get", "post"])
-    def attachments(self, request, pk=None):
-
-        Attachment = self.get_attachment_model()
-        AttachmentSerializer = self.get_attachment_serializer()
-
-        instance = self.get_object()
-        content_type = ContentType.objects.get_for_model(instance)
-
-        if request.method == "GET":
-            attachments = Attachment.objects.filter(
-                content_type=content_type, object_id=instance.id
-            )
-            serializer = AttachmentSerializer(attachments, many=True)
-            return Response(serializer.data)
-
-        if request.method == "POST":
-            serializer = AttachmentSerializer(data=request.data)
-            if serializer.is_valid():
-                attachment = serializer.save(
-                    content_type=content_type,
-                    object_id=instance.id,
-                    created_by=request.user,
-                )
-
-                change_message = [
-                    {
-                        "field": "attachments",
-                        "verbose_name": "Attachments",
-                        "old_value": [],
-                        "new_value": [str(attachment)],
-                    }
-                ]
-                self.log_change(self.request, instance, change_message)
-
-                return Response(serializer.data, status=201)
-            return Response(serializer.errors, status=400)
-
     def log_addition(self, request, instance):
 
-        Activity = self.get_activity_model()
         Notification = self.get_notification_model()
+        Activity = self.get_activity_model()
 
         activity = Activity.objects.create(
             action=Activity.Action_Choices.CREATE,
@@ -341,8 +239,8 @@ class LoggingMixin:
 
     def log_change(self, request, instance, change_message):
 
-        Activity = self.get_activity_model()
         Notification = self.get_notification_model()
+        Activity = self.get_activity_model()
 
         activity = Activity.objects.create(
             action=Activity.Action_Choices.UPDATE,
@@ -366,7 +264,6 @@ class LoggingMixin:
     def log_deletion(self, request, instance):
 
         Activity = self.get_activity_model()
-
         Activity.objects.create(
             action=Activity.Action_Choices.DELETE,
             content=[],
@@ -377,32 +274,75 @@ class LoggingMixin:
     def perform_create(self, serializer):
         # Set the created_by field of a project to the current user upon creation.
         instance = serializer.save(created_by=self.request.user)
-        self.log_addition(self.request, instance)
+
+        if instance.__class__.__name__ in self.MAIN_CLASSES:
+            self.log_addition(self.request, instance)
+
+        if instance.__class__.__name__ in self.GENERIC_CLASSES:
+            # Access the related instance
+            related_instance = instance.content_object
+            change_message = [
+                {
+                    "field": f"{instance.__class__.__name__.lower()}s",
+                    "verbose_name": f"{instance.__class__.__name__}s",
+                    "old_value": [],
+                    "new_value": [str(instance)],
+                }
+            ]
+            self.log_change(self.request, related_instance, change_message)
 
     def perform_update(self, serializer):
 
         # Get the instance before the update
         instance = self.get_object()
-        data_before_update = model_to_dict(instance)
 
-        # Perform the update
-        serializer.save()
+        if instance.__class__.__name__ in self.MAIN_CLASSES:
+            # Get dict representation of instance before update
+            data_before_update = model_to_dict(instance)
 
-        # Get the instance after the update
-        instance = self.get_object()
-        change_message = get_change_message(instance, data_before_update)
+            # Perform the update
+            serializer.save()
 
-        if change_message:
-            self.log_change(self.request, instance, change_message)
+            # Get the instance after the update
+            instance = self.get_object()
+
+            change_message = get_change_message(instance, data_before_update)
+
+            if change_message:
+                self.log_change(self.request, instance, change_message)
+
+        if instance.__class__.__name__ in self.GENERIC_CLASSES:
+            # Get string representation of instance before update
+            instance_before_update = str(instance)
+
+            # Perform the update
+            serializer.save(is_updated=True)
+
+            # Get the instance after the update
+            instance = self.get_object()
+
+            # Access the related instance
+            related_instance = instance.content_object
+            change_message = [
+                {
+                    "field": f"{instance.__class__.__name__.lower()}s",
+                    "verbose_name": f"{instance.__class__.__name__}s",
+                    "old_value": [instance_before_update],
+                    "new_value": [str(instance)],
+                }
+            ]
+            if instance_before_update != str(instance):
+                self.log_change(self.request, related_instance, change_message)
 
     def perform_destroy(self, instance):
-        self.log_deletion(self.request, instance)
 
-        if instance.__class__.__name__ in ("Project", "Task", "Subtask"):
+        if instance.__class__.__name__ in self.MAIN_CLASSES:
+            # Create a deletion log
+            self.log_deletion(self.request, instance)
             # Archive if instance is a Project, Task, or Subtask
             instance.archive()
 
-        if instance.__class__.__name__ in ("Comment", "Attachment"):
+        if instance.__class__.__name__ in self.GENERIC_CLASSES:
             # Access the related instance (either Project, Task, or Subtask)
             related_instance = instance.content_object
             change_message = [
