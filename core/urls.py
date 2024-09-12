@@ -25,6 +25,7 @@ from rest_framework.routers import DefaultRouter
 
 from accounts.views import UserViewSet
 from pm.views import DomainViewSet, ProjectViewSet, TaskViewSet, SubtaskViewSet
+from pm.views import CommentViewSet, AttachmentViewSet, ActivityViewSet
 
 admin.site.site_header = "PM Admin"
 admin.site.site_title = "Admin Portal"
@@ -37,6 +38,9 @@ router.register(r"domains", DomainViewSet)
 router.register(r"projects", ProjectViewSet)
 router.register(r"tasks", TaskViewSet)
 router.register(r"subtasks", SubtaskViewSet)
+router.register(r"comments", CommentViewSet)
+router.register(r"attachments", AttachmentViewSet)
+router.register(r"activities", ActivityViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
