@@ -1,9 +1,14 @@
 from django.forms.models import model_to_dict
 from django.utils.encoding import force_str
 from django.utils.text import Truncator
+from django.conf import settings
+from django.apps import apps
+
+from rest_framework.serializers import ValidationError
 
 from datetime import date
 from uuid import uuid4
+import mimetypes
 import difflib
 import os
 
@@ -13,9 +18,15 @@ def attachment_upload_path(instance, filename):
     Generate a unique filename for the uploaded file.
     """
     _, ext = os.path.splitext(filename)
-    return os.path.join(
-        instance.content_type.model, instance.content_object.uuid, f"{uuid4()}{ext}"
-    )
+    return os.path.join(instance.content_type.model, str(instance.content_object.uuid), f"{uuid4()}{ext}")
+
+
+def file_type_validator(file):
+    mime_type, _ = mimetypes.guess_type(file.name)
+    if mime_type not in settings.ALLOWED_MIME_TYPES:
+        raise ValidationError(
+            f"Unsupported file type: {mime_type}. Allowed types are: PDF, Excel, images, and text files."
+        )
 
 
 def get_change_message(instance, data_before_update):
@@ -47,9 +58,7 @@ def get_change_message(instance, data_before_update):
                 }
 
                 # Use difflib for the description field
-                diff = list(
-                    difflib.unified_diff(old_value.splitlines(), new_value.splitlines())
-                )
+                diff = list(difflib.unified_diff(old_value.splitlines(), new_value.splitlines()))
                 if diff:
 
                     # Skip the metadata
@@ -98,6 +107,61 @@ def get_change_message(instance, data_before_update):
             change_message.append(change)
 
     return change_message or False
+
+
+def get_activity_description(instance):
+    """
+    Generate string representations of items in the content field of an activity instance,
+    if the item includes a `model` key.
+
+    Example:
+
+        Input:
+
+        item = {
+            "field": assigned_to,
+            "verbose_name": Assigned To,
+        >>> "old_value": [1],
+        >>> "new_value": [2],
+            "model": "accounts.user",
+        }
+
+        Output:
+
+        item = {
+            "field": assigned_to,
+            "verbose_name": Assigned To,
+        >>> "old_value": ["test One (test_1@example.com)"],
+        >>> "new_value": ["test Twe (test_2@example.com)"],
+            "model": "accounts.user",
+        }
+    """
+    description = []
+    for item in instance.content:
+        if isinstance(item, dict) and "model" in item:
+            description.append(
+                {
+                    "field": item["field"],
+                    "verbose_name": item["verbose_name"],
+                    "old_value": get_object_details(item.get("model"), item.get("old_value", [])),
+                    "new_value": get_object_details(item.get("model"), item.get("new_value", [])),
+                }
+            )
+        else:
+            description.append(item)
+    return description
+
+
+def get_object_details(model, instance_ids):
+    """
+    Return string representations of instances based on their model and IDs.
+    """
+    try:
+        model = apps.get_model(model)
+        objects = model.objects.filter(id__in=instance_ids)
+        return [str(obj) for obj in objects]
+    except LookupError:
+        return f"Unknown objects of type {model}"
 
 
 def format_date_us(d):

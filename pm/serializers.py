@@ -1,22 +1,27 @@
-from rest_framework import serializers
+from django.template.defaultfilters import filesizeformat
+
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from .models import Domain, Project, Task, Subtask
+from .models import Comment, Attachment, Activity
+
+from .utils import get_activity_description, file_type_validator
 
 
-class DomainSerializer(serializers.ModelSerializer):
+class DomainSerializer(ModelSerializer):
 
     class Meta:
         model = Domain
         fields = ["id", "title", "members"]
 
 
-class BaseItemSerializerMixin(serializers.ModelSerializer):
+class BaseItemSerializerMixin(ModelSerializer):
     """
-    Mixin to provide common fields and methods for Project, Task, and Subtask serializers.
+    Mixin to provide common fields and methods for Project, Task, and Subtask
     """
 
-    comment_count = serializers.SerializerMethodField()
-    attachment_count = serializers.SerializerMethodField()
+    comment_count = SerializerMethodField()
+    attachment_count = SerializerMethodField()
 
     def get_comment_count(self, instance):
         return instance.get_comment_count()
@@ -43,16 +48,17 @@ class BaseItemSerializerMixin(serializers.ModelSerializer):
             "is_overdue",
             "comment_count",
             "attachment_count",
+            "content_type",
         ]
 
         # This ensures the field can't be set directly through the API
-        read_only_fields = ["created_by"]
+        read_only_fields = ["created_by", "content_type"]
 
 
 class ProjectSerializer(BaseItemSerializerMixin):
 
-    domain_title = serializers.SerializerMethodField()
-    task_count = serializers.SerializerMethodField()
+    domain_title = SerializerMethodField()
+    task_count = SerializerMethodField()
 
     def get_domain_title(self, instance):
         return instance.domain.title
@@ -71,7 +77,7 @@ class ProjectSerializer(BaseItemSerializerMixin):
 
 class TaskSerializer(BaseItemSerializerMixin):
 
-    subtask_count = serializers.SerializerMethodField()
+    subtask_count = SerializerMethodField()
 
     def get_subtask_count(self, instance):
         return instance.subtasks.count()
@@ -86,3 +92,68 @@ class SubtaskSerializer(BaseItemSerializerMixin):
     class Meta(BaseItemSerializerMixin.Meta):
         model = Subtask
         fields = BaseItemSerializerMixin.Meta.fields + ["task"]
+
+
+class CommentSerializer(ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "text",
+            "content_type",
+            "object_id",
+            "created_by",
+            "created_at",
+            "updated_at",
+            "time_since_creation",
+            "is_updated",
+        ]
+
+
+class AttachmentSerializer(ModelSerializer):
+
+    extension = SerializerMethodField()
+    file_size = SerializerMethodField()
+
+    def validate_file(self, value):
+        file_type_validator(value)
+        return value
+
+    def get_extension(self, instance):
+        return instance.extension
+
+    def get_file_size(self, instance):
+        return filesizeformat(instance.file_size)
+
+    class Meta:
+        model = Attachment
+        fields = [
+            "id",
+            "file",
+            "file_name",
+            "extension",
+            "file_size",
+            "description",
+            "content_type",
+            "object_id",
+            "created_by",
+            "created_at",
+            "time_since_creation",
+            "is_updated",
+        ]
+
+
+class ActivitySerializer(ModelSerializer):
+    content_type = SerializerMethodField()
+    description = SerializerMethodField()
+
+    def get_content_type(self, obj):
+        return obj.content_type.model if obj.content_type else None
+
+    def get_description(self, obj):
+        return get_activity_description(obj)
+
+    class Meta:
+        model = Activity
+        fields = ["id", "get_action_display", "content_type", "description", "created_by", "time_since_creation"]
