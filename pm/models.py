@@ -13,6 +13,10 @@ from .utils import attachment_upload_path
 from uuid import uuid4
 import os
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 USER = settings.AUTH_USER_MODEL
 
@@ -29,14 +33,24 @@ class Attachment(BaseGenericMixin):
 
     @property
     def extension(self):
-        _, ext = os.path.splitext(self.file.name)
-        return ext[1:]
+        if self.file:
+            _, ext = os.path.splitext(self.file.name)
+            return ext[1:]
+        return ""
 
     def save(self, *args, **kwargs):
         # Update original file_name and file_size before saving
-        if not self.pk:
-            self.file_name = self.file.name
-            self.file_size = self.file.size
+        self.file_name = self.file.name
+        self.file_size = self.file.size
+        if self.pk:
+            # If this is an update, delete the old file
+            try:
+                old_file = Attachment.objects.get(pk=self.pk)
+                if old_file.file != self.file:
+                    old_file.file.delete(save=False)
+            except Attachment.DoesNotExist:
+                logger.warning(f"Failed to delete the old file during an Attachment update.")
+
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
