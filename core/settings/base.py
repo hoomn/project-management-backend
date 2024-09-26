@@ -19,7 +19,7 @@ import os
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -30,7 +30,6 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", False) == "True"
 
-ALLOWED_HOSTS = []
 
 # The model to use to represent a User.
 # See https://docs.djangoproject.com/en/5.0/topics/auth/customizing/#auth-custom-user
@@ -56,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "corsheaders",
     "accounts",
     "notifications",
     "pm",
@@ -64,6 +64,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -92,33 +93,14 @@ TEMPLATES = [
 WSGI_APPLICATION = "core.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 
@@ -139,44 +121,16 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
-# DEVELOPMENT SETTINGS
-
-# Email Configuration (dev)
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@pm.com")
 
-# Email Configuration (peod)
-# EMAIL_BACKEND = "notifications.email_backends.SesEmailBackend"
-# AWS_SES_ACCESS_KEY = os.getenv("AWS_SES_ACCESS_KEY")
-# AWS_SES_SECRET_KEY = os.getenv("AWS_SES_SECRET_KEY")
-# AWS_SES_REGION_NAME = os.getenv("AWS_SES_REGION_NAME")
-
-
-# Global settings for REST framework API
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-    ],
-}
-
-
-# A JSON Web Token authentication plugin for the Django REST Framework
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
-    # It will work instead of the default serializer(TokenObtainPairSerializer).
-    # "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.CustomTokenObtainPairSerializer",
-    "UPDATE_LAST_LOGIN": True,
+UNFOLD = {
+    "ENVIRONMENT": "core.utils.environment_callback",
 }
 
 
