@@ -19,10 +19,7 @@ def send_notification_email(sender, instance, created, **kwargs):
 
         # Check user preferences for email notifications
         # Users should be able to receive single-use code
-        if (
-            not instance.user.profile.notification
-            and related_object.__class__.__name__ is not "SingleUseCode"
-        ):
+        if not instance.user.profile.notification and related_object.__class__.__name__ is not "SingleUseCode":
             return
 
         # Check if the related object has a render_notification method
@@ -52,5 +49,5 @@ def send_notification_email(sender, instance, created, **kwargs):
             )
             email.send()
         except Exception as e:
-            # Log the error or handle it as appropriate for your application
+            # Log the error
             logger.warning(f"Failed to send email: {e}")

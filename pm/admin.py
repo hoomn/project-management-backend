@@ -39,7 +39,7 @@ class ActivityAdmin(ModelAdmin):
 
 
 @admin.register(Domain)
-class AttachmentAdmin(ModelAdmin):
+class DomainAdmin(ModelAdmin):
     list_display = ("title", "members_count", "created_at", "created_by")
     filter_horizontal = ("members",)
 
@@ -52,7 +52,7 @@ class AttachmentAdmin(ModelAdmin):
     def members_count(self, obj):
         return obj.members.count()
 
-    members_count.short_description = 'Number of Members'
+    members_count.short_description = "Number of Members"
 
 
 class ItemModelAdmin(ModelAdmin):
@@ -76,7 +76,6 @@ class ItemModelAdmin(ModelAdmin):
             # Only set created_by during the creation.
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
-
 
 
 @admin.register(Project)
