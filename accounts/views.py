@@ -62,7 +62,7 @@ class UserViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
 
         email = email.lower()
 
-        if AccessList.objects.filter(email=email).exists():
+        if AccessList.objects.filter(email=email, is_active=True).exists():
             user, created = User.objects.get_or_create(email=email)
             if created:
                 # Mark the user as having no password set
