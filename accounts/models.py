@@ -42,17 +42,13 @@ class User(AbstractUser, TimestampMixin):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    notification = models.BooleanField(
-        verbose_name="Receive Email Notification", default=True
-    )
+    notification = models.BooleanField(verbose_name="Receive Email Notification", default=True)
 
 
 class SingleUseCode(NotificationMixin):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    code = models.UUIDField(
-        "Single-Use Code", default=uuid4, unique=True, editable=False
-    )
+    code = models.UUIDField("Single-Use Code", default=uuid4, unique=True, editable=False)
     expires_at = models.DateTimeField(null=True, blank=True)
     is_used = models.BooleanField(default=False)
 
@@ -64,8 +60,11 @@ class SingleUseCode(NotificationMixin):
     def __str__(self):
         return "*" * (12) + self.code.hex[-6:]
 
-    def is_valid(self):
+    def is_expired(self):
         return self.expires_at > timezone.now()
+
+    def is_valid(self):
+        return not self.is_used and not self.is_expired
 
     def get_absolute_url(self):
         return None
@@ -94,9 +93,7 @@ class AccessList(TimestampMixin):
 
     email = models.EmailField(max_length=100, unique=True, blank=False)
     is_active = models.BooleanField(default=True)
-    created_by = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.SET_NULL
-    )
+    created_by = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name_plural = "Access list"
