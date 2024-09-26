@@ -1,0 +1,39 @@
+name: Django Tests
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.11, 3.12]
+
+    env:
+      # dummy SECRET_KEY only for github actions
+      SECRET_KEY: insecure-72bad3c6d853a008226382dda74c0006b04175c14
+      DB_ENGINE: django.db.backends.sqlite3
+      DB_NAME: db.sqlite3
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Apply Migrations
+        run: python manage.py migrate
+
+      - name: Run Django Tests
+        run: python manage.py test --noinput
