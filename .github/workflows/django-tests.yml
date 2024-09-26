@@ -5,12 +5,18 @@ on:
     branches: ["main"]
 
 jobs:
-  django_test:
+  test:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
       matrix:
         python-version: [3.11, 3.12]
+
+    env:
+      # dummy SECRET_KEY only for github actions
+      SECRET_KEY: insecure-72bad3c6d853a008226382dda74c0006b04175c14
+      DB_ENGINE: django.db.backends.sqlite3
+      DB_NAME: db.sqlite3
 
     steps:
       - name: Checkout Code
@@ -30,9 +36,4 @@ jobs:
         run: python manage.py migrate
 
       - name: Run Django Tests
-        env:
-          # dummy SECRET_KEY only for github actions
-          SECRET_KEY: insecure-72bad3c6d853a008226382dda74c0006b04175c14
-          DB_ENGINE: django.db.backends.sqlite3
-          DB_NAME: db.sqlite3
         run: python manage.py test --noinput
