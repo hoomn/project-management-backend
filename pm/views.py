@@ -1,9 +1,8 @@
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
 
 from .mixins import LoggingMixin
 from .models import Domain, Project, Task, Subtask
@@ -206,12 +205,3 @@ class ActivityViewSet(ReadOnlyModelViewSet):
 
         # Otherwise, paginate as usual
         return super().paginate_queryset(queryset)
-
-
-class HealthViewSet(ViewSet):
-    """
-    A viewset for application health status.
-    """
-
-    def list(self, request):
-        return Response({"status": "OK"}, status=HTTP_200_OK)

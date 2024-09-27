@@ -19,12 +19,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 
+from django.http import HttpResponse
+from django.views.decorators.http import require_GET
+
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.routers import DefaultRouter
 
 from accounts.views import UserViewSet
 from pm.views import DomainViewSet, ProjectViewSet, TaskViewSet, SubtaskViewSet
-from pm.views import CommentViewSet, AttachmentViewSet, ActivityViewSet, HealthViewSet
+from pm.views import CommentViewSet, AttachmentViewSet, ActivityViewSet
 from notifications.views import NotificationViewSet
 
 admin.site.site_header = "PM Admin"
@@ -41,9 +44,15 @@ router.register(r"comments", CommentViewSet)
 router.register(r"attachments", AttachmentViewSet)
 router.register(r"activities", ActivityViewSet)
 router.register(r"notifications", NotificationViewSet)
-router.register(r"health", HealthViewSet, basename="health")
+
+
+@require_GET
+def health_check(request):
+    return HttpResponse("OK")
+
 
 urlpatterns = [
+    path("health/", health_check),
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
     # Simple JWT
