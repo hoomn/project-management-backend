@@ -24,7 +24,7 @@ from rest_framework.routers import DefaultRouter
 
 from accounts.views import UserViewSet
 from pm.views import DomainViewSet, ProjectViewSet, TaskViewSet, SubtaskViewSet
-from pm.views import CommentViewSet, AttachmentViewSet, ActivityViewSet
+from pm.views import CommentViewSet, AttachmentViewSet, ActivityViewSet, HealthViewSet
 from notifications.views import NotificationViewSet
 
 admin.site.site_header = "PM Admin"
@@ -33,7 +33,6 @@ admin.site.index_title = "PM"
 
 router = DefaultRouter()
 router.register(r"users", UserViewSet)
-
 router.register(r"domains", DomainViewSet)
 router.register(r"projects", ProjectViewSet)
 router.register(r"tasks", TaskViewSet)
@@ -42,6 +41,7 @@ router.register(r"comments", CommentViewSet)
 router.register(r"attachments", AttachmentViewSet)
 router.register(r"activities", ActivityViewSet)
 router.register(r"notifications", NotificationViewSet)
+router.register(r"health", HealthViewSet, basename="health")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
