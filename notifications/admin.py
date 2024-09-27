@@ -16,7 +16,7 @@ class ReadOnlyAdmin(ModelAdmin):
 
 
 @admin.register(Notification)
-class NotificationAdmin(ReadOnlyAdmin):
+class NotificationAdmin(ModelAdmin):
     list_display = ["user", "viewed", "created_at", "updated_at"]
 
 
