@@ -17,9 +17,12 @@ def send_notification_email(sender, instance, created, **kwargs):
         # Get the related object (e.g., Activity)
         related_object = instance.content_object
 
+        # TODO: Implement finer control based on the notification category to
+        # allow for specific behavior and preferences per category.
+
         # Check user preferences for email notifications
         # Users should be able to receive single-use code
-        if not instance.user.profile.notification and related_object.__class__.__name__ is not "SingleUseCode":
+        if not instance.user.profile.notification and related_object.__class__.__name__ != "SingleUseCode":
             return
 
         # Check if the related object has a render_notification method

@@ -72,8 +72,8 @@ class EmailLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        # Truncate description if it exceeds 1024 characters
+        # Truncate description if it exceeds 128 characters
         if len(self.description) > 128:
-            self.content = self.content[:128]
+            self.description = self.description[:128]
 
         super().save(*args, **kwargs)
