@@ -18,7 +18,7 @@ class Notification(TimestampMixin):
     content_object = GenericForeignKey("content_type", "object_id")
 
     def __str__(self):
-        return f"{self.content_type} Notification fot {self.user}"
+        return f"{self.content_type} Notification for {self.user}"
 
     def time_since_creation(self):
         return get_timesince(self.created_at)
