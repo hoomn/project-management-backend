@@ -10,6 +10,8 @@ from notifications.mixins import NotificationMixin
 from .mixins import BaseItemMixin, BaseGenericMixin
 from .utils import attachment_upload_path
 
+from .managers import ProjectManager, TaskManager, SubtaskManager
+
 from uuid import uuid4
 import os
 
@@ -152,6 +154,8 @@ class Project(BaseItemMixin):
         related_name="%(class)ss",
     )
 
+    objects = ProjectManager()
+
     class Meta(BaseItemMixin.Meta):
         constraints = [models.UniqueConstraint(fields=["domain", "title"], name="unique_domain_title")]
 
@@ -173,6 +177,8 @@ class Task(BaseItemMixin):
         related_name="%(class)ss",
     )
 
+    objects = TaskManager()
+
     class Meta(BaseItemMixin.Meta):
         constraints = [models.UniqueConstraint(fields=["project", "title"], name="unique_project_title")]
 
@@ -192,6 +198,8 @@ class Subtask(BaseItemMixin):
         on_delete=models.CASCADE,
         related_name="%(class)ss",
     )
+
+    objects = SubtaskManager()
 
     class Meta(BaseItemMixin.Meta):
         constraints = [models.UniqueConstraint(fields=["task", "title"], name="unique_task_title")]

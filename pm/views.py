@@ -3,7 +3,6 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
-from django.db.models import Q
 
 from .mixins import LoggingMixin
 from .models import Domain, Project, Task, Subtask
@@ -88,13 +87,10 @@ class TaskViewSet(LoggingMixin, ModelViewSet):
         # Get the 'assigned_to' parameter from the URL
         assigned_to = request.query_params.get("assigned_to")
         tasks = Task.objects.filter(project__domain__in=user.domain_membership.all())
+
         # Further filter by 'assigned_to' of task and subtasks if provided
         if assigned_to:
-            tasks = (
-                tasks.filter(Q(assigned_to__id=assigned_to) | Q(subtasks__assigned_to__id=assigned_to))
-                .exclude(subtasks__status=Subtask.Status_Choices.DONE)
-                .distinct()
-            )
+            tasks = Task.objects.assigned_to_user(assigned_to)
 
         serializer = self.get_serializer(tasks, many=True)
         return Response(serializer.data)
@@ -103,11 +99,7 @@ class TaskViewSet(LoggingMixin, ModelViewSet):
     def current_user(self, request):
         # Get tasks assigned to the current user
         user = request.user
-        tasks = (
-            Task.objects.filter(Q(assigned_to=user) | Q(subtasks__assigned_to=user))
-            .exclude(subtasks__status=Subtask.Status_Choices.DONE)
-            .distinct()
-        )
+        tasks = Task.objects.assigned_to_user(user.id)
         serializer = self.get_serializer(tasks, many=True)
         return Response(serializer.data)
 

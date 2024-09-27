@@ -1,10 +1,7 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.utils.module_loading import import_string
 from django.forms.models import model_to_dict
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from django.db import models
 from django.conf import settings
 from django.apps import apps
@@ -13,7 +10,6 @@ from django.utils import timezone
 from core.mixins import TimestampMixin
 from core.utils import get_timesince, get_local_time
 
-from .managers import BaseItemManager
 from .utils import get_change_message
 
 from uuid import uuid4
@@ -83,7 +79,6 @@ class BaseItemMixin(TimestampMixin):
     attachments = GenericRelation("pm.attachment")
     comments = GenericRelation("pm.comment")
 
-    objects = BaseItemManager()
     all_objects = models.Manager()
 
     class Meta:
