@@ -3,11 +3,19 @@ from .base import *
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 # Security
+# Allow the site to be included in browser HSTS preload lists
 SECURE_HSTS_PRELOAD = True
-SECURE_HSTS_SECONDS = 1
+# Enable HTTP Strict Transport Security (HSTS) to force HTTPS for one hour
+SECURE_HSTS_SECONDS = 3600
+# Apply HSTS to all subdomains
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_SSL_REDIRECT = True
+# Force HTTPS across the entire site
+SECURE_SSL_REDIRECT = True
+# Exempt all subdomains of elasticbeanstalk.com from the SSL redirect
+SECURE_REDIRECT_EXEMPT = [r"^.*\.elasticbeanstalk\.com"]
+# Ensure session cookies are only sent over HTTPS
 SESSION_COOKIE_SECURE = True
+# Ensure CSRF cookies are only sent over HTTPS
 CSRF_COOKIE_SECURE = True
 
 # Database
