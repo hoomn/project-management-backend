@@ -52,25 +52,23 @@ class SingleUseCodeManager(models.Manager):
     Define a model manager for UseCodeManager model.
     """
 
-    def create(self, **kwargs):
+    def create(self, user):
 
         # Calculate the expiration time (15 minutes from now)
         expiration_time = timezone.now() + timezone.timedelta(minutes=15)
 
         # If a code already exists for this user, update it
         single_use_code, created = self.model.objects.update_or_create(
+            user=user,
             defaults={
                 "code": self.generate_code(),
                 "expires_at": expiration_time,
                 "is_used": False,
-                **kwargs,
-            }
+            },
         )
 
         # Notify the user via email when a single-use code is created
-        Notification.objects.create(
-            user=single_use_code.user, content_object=single_use_code
-        )
+        Notification.objects.create(user=single_use_code.user, content_object=single_use_code)
 
         return single_use_code
 
