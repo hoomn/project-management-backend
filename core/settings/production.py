@@ -60,8 +60,7 @@ REST_FRAMEWORK = {
 }
 
 # CORS headers allows resources to be accessed from other domains
-CORS_ALLOWED_ORIGINS = ["https://main.d2s0mr17z37dgw.amplifyapp.com"]
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
 # A JSON Web Token authentication plugin for the Django REST Framework
 SIMPLE_JWT = {
