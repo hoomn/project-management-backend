@@ -83,7 +83,7 @@ class SingleUseCode(NotificationMixin):
             return {
                 "subject": f"Notification: Your { item.title() }",
                 "body": f"Your { item } is: { self.code }\n— PLEASE DO NOT SHARE THIS CODE.",
-                "body_html": f"<p>Your { item } is below:</p><p>{ self.code }</p><p style='color:#cc0000'><strong>PLEASE DO NOT SHARE THIS CODE.</strong></p>",
+                "body_html": f"<p>Below is your { item }:</p><p>{ self.code }</p><p style='color:#cc0000'><strong>PLEASE DO NOT SHARE THIS CODE.</strong></p>",
             }
         else:
             raise NotImplementedError()
