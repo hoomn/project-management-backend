@@ -61,10 +61,10 @@ class SingleUseCode(NotificationMixin):
         return "*" * (12) + self.code.hex[-6:]
 
     def is_expired(self):
-        return self.expires_at > timezone.now()
+        return self.expires_at < timezone.now()
 
     def is_valid(self):
-        return not self.is_used and not self.is_expired
+        return not self.is_used and not self.is_expired()
 
     def get_absolute_url(self):
         return None
