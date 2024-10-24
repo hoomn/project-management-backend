@@ -5,6 +5,7 @@ botocore==1.35.18
 Django==5.1.1
 django-cors-headers==4.4.0
 django-filter==24.3
+django-storages==1.14.4
 django-unfold==0.37.0
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
