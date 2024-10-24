@@ -27,6 +27,8 @@ REST_FRAMEWORK = {
     ],
 }
 
+# CORS headers allows resources to be accessed from other domains
+CORS_ALLOW_ALL_ORIGINS = True
 
 # A JSON Web Token authentication plugin for the Django REST Framework
 SIMPLE_JWT = {

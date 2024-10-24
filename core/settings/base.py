@@ -148,7 +148,7 @@ ALLOWED_MIME_TYPES = [
     "text/csv",
     "application/rtf",
     # .docx
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     # .xlsx
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]
