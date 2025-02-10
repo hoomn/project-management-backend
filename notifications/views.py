@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .serializers import NotificationSerializer
-from .models import *
+from .models import Notification
 
 
 class NotificationViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
@@ -25,6 +25,5 @@ class NotificationViewSet(UpdateModelMixin, ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["POST"])
     def mark_all_as_viewed(self, request):
-        queryset = self.get_queryset().filter(viewed=False)
-        queryset.update(viewed=True)
+        self.get_queryset().update(viewed=True)
         return Response({"message": "All notifications marked as viewed."}, status=status.HTTP_200_OK)
