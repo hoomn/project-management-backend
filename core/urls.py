@@ -43,6 +43,7 @@ router.register(r"comments", CommentViewSet)
 router.register(r"attachments", AttachmentViewSet)
 router.register(r"activities", ActivityViewSet)
 router.register(r"notifications", NotificationViewSet)
+router.register(r"todos", TodoViewSet, basename="todo")
 
 
 urlpatterns = [
