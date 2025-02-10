@@ -22,7 +22,7 @@ class UserAdmin(ModelAdmin):
 
     fieldsets = [
         ("Credentials", {"fields": ("email", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name")}),
+        ("Personal info", {"fields": ("first_name", "last_name", "email_notification")}),
         (
             "Permissions",
             {
