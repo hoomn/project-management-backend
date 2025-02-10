@@ -30,15 +30,82 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", False) == "True"
 
+# Google reCAPTCHA Configuration
+RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY")
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
+RECAPTCHA_REQUIRED_SCORE = 0.85
 
 # The model to use to represent a User.
 # See https://docs.djangoproject.com/en/5.0/topics/auth/customizing/#auth-custom-user
 AUTH_USER_MODEL = "accounts.User"
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-    "accounts.auth_backends.SingleUseCodeBackend",
-]
+
+# Djoser configuration
+DJOSER = {
+    "EMAIL_FRONTEND_PROTOCOL": os.getenv("EMAIL_FRONTEND_PROTOCOL"),
+    "EMAIL_FRONTEND_DOMAIN": os.getenv("EMAIL_FRONTEND_DOMAIN"),
+    # Name of a unique field in User model to be used as id for /users/<id>/ endpoints.
+    # "USER_ID_FIELD": "uuid",
+    "LOGIN_FIELD": "email",
+    "PASSWORD_RESET_CONFIRM_URL": "auth/password/reset/confirm/{uid}/{token}",
+    "SET_PASSWORD_RETYPE": True,
+    "PASSWORD_RESET_CONFIRM_RETYPE": True,
+    "SEND_CONFIRMATION_EMAIL": False,
+    "PASSWORD_CHANGED_EMAIL_CONFIRMATION": False,
+    "SERIALIZERS": {
+        "user": "accounts.serializers.CustomUserSerializer",
+        "current_user": "accounts.serializers.CustomUserSerializer",
+        # "user_create_password_retype": "accounts.serializers.CustomUserCreatePasswordRetypeSerializer",
+        "password_reset": "accounts.serializers.CustomSendEmailResetSerializer",
+        # "password_reset_confirm_retype": "accounts.serializers.CustomPasswordResetConfirmRetypeSerializer",
+    },
+    "PERMISSIONS": {
+        # Public views
+        "user_create": ["accounts.permissions.DenyAll"],
+        "token_create": ["rest_framework.permissions.AllowAny"],
+        "password_reset": ["rest_framework.permissions.AllowAny"],
+        "password_reset_confirm": ["rest_framework.permissions.AllowAny"],
+        # Authenticated user only views
+        "user": ["rest_framework.permissions.IsAuthenticated"],
+        # Current user only views
+        "set_password": ["accounts.permissions.CurrentUser"],
+        "token_destroy": ["accounts.permissions.CurrentUser"],
+        # Forbidden views
+        "activation": ["accounts.permissions.DenyAll"],
+        "user_list": ["accounts.permissions.DenyAll"],
+        "user_delete": ["accounts.permissions.DenyAll"],
+        "set_username": ["accounts.permissions.DenyAll"],
+        "username_reset": ["accounts.permissions.DenyAll"],
+        "username_reset_confirm": ["accounts.permissions.DenyAll"],
+    },
+    "EMAIL": {
+        "password_reset": "accounts.email.CustomPasswordResetEmail",
+    },
+}
+
+
+# Global settings for REST framework API
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+}
+
+
+# A JSON Web Token authentication plugin for the Django REST Framework
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    # Replaces the default `TokenObtainPairSerializer` with a custom implementation.
+    "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.CustomTokenObtainPairSerializer",
+    "UPDATE_LAST_LOGIN": True,
+}
+
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
@@ -55,6 +122,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "django_filters",
+    "djoser",
     "corsheaders",
     "accounts",
     "notifications",

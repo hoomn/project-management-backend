@@ -19,22 +19,12 @@ MEDIA_ROOT = BASE_DIR / "media"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
-# Global settings for REST framework API
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-    ],
-}
-
 # CORS headers allows resources to be accessed from other domains
 CORS_ALLOW_ALL_ORIGINS = True
 
-# A JSON Web Token authentication plugin for the Django REST Framework
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
-    # It will work instead of the default serializer(TokenObtainPairSerializer).
-    # "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.CustomTokenObtainPairSerializer",
-    "UPDATE_LAST_LOGIN": True,
-}
+
+# Global settings for REST framework API
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"].append(
+    # Additional authentication for development
+    "rest_framework.authentication.SessionAuthentication"
+)
