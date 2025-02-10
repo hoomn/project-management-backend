@@ -28,6 +28,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "content_type",
+            "object_id",
             "action",
             "description",
             "url",
@@ -35,3 +36,4 @@ class NotificationSerializer(serializers.ModelSerializer):
             "created_at",
             "time_since_creation",
         ]
+        read_only_fields = ["content_type", "object_id", "action"]
