@@ -2,7 +2,10 @@ from django.template.defaultfilters import filesizeformat
 
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
-from .models import Domain, Project, Task, Subtask
+from rest_framework import serializers
+from core.mixins import DropdownModelSerializer
+
+from .models import Domain, Priority, Status, Project, Task, Subtask
 from .models import Comment, Attachment, Activity
 
 from .utils import get_activity_description, file_type_validator
@@ -15,11 +18,31 @@ class DomainSerializer(ModelSerializer):
         fields = ["id", "title", "members"]
 
 
+class DomainDropdownSerializer(DropdownModelSerializer):
+
+    class Meta:
+        model = Domain
+
+
+class PriorityDropdownSerializer(DropdownModelSerializer):
+
+    class Meta:
+        model = Priority
+
+
+class StatusDropdownSerializer(DropdownModelSerializer):
+
+    class Meta:
+        model = Status
+
+
 class BaseItemSerializerMixin(ModelSerializer):
     """
     Mixin to provide common fields and methods for Project, Task, and Subtask
     """
 
+    status_title = serializers.CharField(source="status.title", read_only=True)
+    priority_title = serializers.CharField(source="priority.title", read_only=True)
     comment_count = SerializerMethodField()
     attachment_count = SerializerMethodField()
 
@@ -38,9 +61,9 @@ class BaseItemSerializerMixin(ModelSerializer):
             "start_date",
             "end_date",
             "status",
-            "get_status_display",
+            "status_title",
             "priority",
-            "get_priority_display",
+            "priority_title",
             "assigned_to",
             "created_by",
             "time_since_creation",
@@ -51,8 +74,7 @@ class BaseItemSerializerMixin(ModelSerializer):
             "content_type",
         ]
 
-        # This ensures the field can't be set directly through the API
-        read_only_fields = ["created_by", "content_type"]
+        read_only_fields = ["uuid", "created_by", "content_type"]
 
 
 class ProjectSerializer(BaseItemSerializerMixin):
@@ -156,4 +178,12 @@ class ActivitySerializer(ModelSerializer):
 
     class Meta:
         model = Activity
-        fields = ["id", "get_action_display", "content_type", "description", "created_by", "time_since_creation"]
+        fields = [
+            "id",
+            "get_action_display",
+            "content_type",
+            "object_id",
+            "description",
+            "created_by",
+            "time_since_creation",
+        ]
