@@ -22,12 +22,12 @@ from django.conf import settings
 from rest_framework.routers import DefaultRouter
 
 from accounts.views import UserDropdownViewSet, TokenValidationViewSet
-
 from pm.views import ProjectViewSet, TaskViewSet, SubtaskViewSet
 from pm.views import CommentViewSet, AttachmentViewSet, ActivityViewSet
 from pm.views import DomainDropdownViewSet, PriorityDropdownViewSet, StatusDropdownViewSet
 
 from notifications.views import NotificationViewSet
+from todo.views import TodoViewSet
 
 admin.site.site_header = "PM Admin"
 admin.site.site_title = "Admin Portal"
@@ -36,7 +36,6 @@ admin.site.index_title = "PM"
 router = DefaultRouter()
 
 router.register(r"users/token/validation", TokenValidationViewSet, basename="token-validation")
-
 router.register(r"options/user", UserDropdownViewSet, basename="user-options")
 router.register(r"options/domain", DomainDropdownViewSet, basename="domain-options")
 router.register(r"options/priority", PriorityDropdownViewSet, basename="priority-options")
@@ -49,6 +48,7 @@ router.register(r"comments", CommentViewSet)
 router.register(r"attachments", AttachmentViewSet)
 router.register(r"activities", ActivityViewSet)
 router.register(r"notifications", NotificationViewSet)
+router.register(r"todos", TodoViewSet, basename="todo")
 
 
 urlpatterns = [
