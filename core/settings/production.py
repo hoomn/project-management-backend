@@ -52,19 +52,14 @@ AWS_SES_ACCESS_KEY = os.getenv("AWS_SES_ACCESS_KEY")
 AWS_SES_SECRET_KEY = os.getenv("AWS_SES_SECRET_KEY")
 
 
-# Global settings for REST framework API
-REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework_simplejwt.authentication.JWTAuthentication"],
-    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-}
-
 # CORS headers allows resources to be accessed from other domains
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
-# A JSON Web Token authentication plugin for the Django REST Framework
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
-    "UPDATE_LAST_LOGIN": True,
-}
+
+# Global settings for REST framework API
+REST_FRAMEWORK.update(
+    REST_FRAMEWORK={
+        "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+        "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    }
+)

@@ -14,16 +14,15 @@ logger = logging.getLogger(__name__)
 def send_notification_email(sender, instance, created, **kwargs):
     if created:
 
-        # Get the related object (e.g., Activity)
-        related_object = instance.content_object
-
         # TODO: Implement finer control based on the notification category to
         # allow for specific behavior and preferences per category.
 
         # Check user preferences for email notifications
-        # Users should be able to receive single-use code
-        if not instance.user.profile.notification and related_object.__class__.__name__ != "SingleUseCode":
+        if not instance.user.email_notification:
             return
+
+        # Get the related object (e.g., Activity)
+        related_object = instance.content_object
 
         # Check if the related object has a render_notification method
         if hasattr(related_object, "render_notification"):

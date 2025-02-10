@@ -1,47 +1,49 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from accounts.models import User, Profile
+from djoser.serializers import UserSerializer as DjoserUserSerializer
+from djoser.serializers import SendEmailResetSerializer
+
+from accounts.models import User
+from core.mixins import DropdownModelSerializer
+
+from .utils import validate_recaptcha
 
 
-class BasicUserSerializer(serializers.ModelSerializer):
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    recaptcha = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+
+        # Remove recaptcha from attrs and validate
+        recaptcha_token = attrs.pop("recaptcha", None)
+        validate_recaptcha(recaptcha_token)
+
+        # Validate credentials using parent class
+        return super().validate(attrs)
+
+
+class UserDropdownSerializer(DropdownModelSerializer):
+
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "initial"]
 
 
-class UserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(DjoserUserSerializer):
 
-    domain_membership = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    has_usable_password = serializers.SerializerMethodField()
-    notification = serializers.BooleanField(source="profile.notification")
+    class Meta(DjoserUserSerializer.Meta):
+        fields = DjoserUserSerializer.Meta.fields + ("first_name", "last_name", "initials", "email_notification")
 
-    def get_has_usable_password(self, obj):
-        return obj.has_usable_password()
 
-    class Meta:
-        model = User
-        fields = [
-            "id",
-            "email",
-            "first_name",
-            "last_name",
-            "initial",
-            "is_staff",
-            "domain_membership",
-            "has_usable_password",
-            "notification",
-        ]
-        read_only_fields = ["email", "initial", "is_staff"]
+class CustomSendEmailResetSerializer(SendEmailResetSerializer):
 
-    def update(self, instance, validated_data):
-        profile_data = validated_data.pop("profile", {})
-        notification = profile_data.get("notification")
+    recaptcha = serializers.CharField(write_only=True, required=True)
 
-        instance = super().update(instance, validated_data)
+    def validate(self, attrs):
 
-        if notification is not None:
-            Profile.objects.update_or_create(
-                user=instance, defaults={"notification": notification}
-            )
+        # Remove recaptcha from attrs and validate
+        recaptcha_token = attrs.pop("recaptcha", None)
+        validate_recaptcha(recaptcha_token)
 
-        return instance
+        return super().validate(attrs)

@@ -19,11 +19,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.routers import DefaultRouter
 
-from accounts.views import UserViewSet
-from pm.views import DomainViewSet, ProjectViewSet, TaskViewSet, SubtaskViewSet
+from accounts.views import UserDropdownViewSet, TokenValidationViewSet
+
+from pm.views import ProjectViewSet, TaskViewSet, SubtaskViewSet
 from pm.views import CommentViewSet, AttachmentViewSet, ActivityViewSet
 from notifications.views import NotificationViewSet
 
@@ -44,17 +44,17 @@ router.register(r"notifications", NotificationViewSet)
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
-    # Simple JWT
-    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    # REST framework's login and logout views
-    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path("api/auth/", include("djoser.urls")),
+    path("api/auth/", include("djoser.urls.jwt")),
+    path("admin/", admin.site.urls),
 ]
 
 if settings.DEBUG:
     from django.conf.urls.static import static
+
+    # REST framework's login and logout views
+    urlpatterns.append(path("api-auth/", include("rest_framework.urls", namespace="rest_framework")))
 
     # Serve user-uploaded media files during development
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
