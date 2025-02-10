@@ -1,42 +1,52 @@
-from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
+from django.contrib.auth import get_user_model
+
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
+from django_filters import rest_framework as filters
 
 from .mixins import LoggingMixin
-from .models import Domain, Project, Task, Subtask
+from .models import Domain, Priority, Status, Project, Task, Subtask
 from .models import Comment, Attachment, Activity
 
-from .serializers import DomainSerializer, ProjectSerializer, TaskSerializer, SubtaskSerializer
+from .permissions import IsOwnerOrReadOnly
+
+from .serializers import DomainDropdownSerializer, PriorityDropdownSerializer, StatusDropdownSerializer
+from .serializers import ProjectSerializer, TaskSerializer, SubtaskSerializer
 from .serializers import CommentSerializer, AttachmentSerializer, ActivitySerializer
 
 
-class IsOwnerOrReadOnly(IsAuthenticated):
-    """
-    Custom permission to allow only the owner of an object to `update` or `delete` it.
-    All authenticated users are allowed to `retrieve` objects (GET, HEAD, OPTIONS requests).
-    """
+class DomainDropdownViewSet(ReadOnlyModelViewSet):
 
-    def has_object_permission(self, request, view, obj):
-        # Allow read-only access for SAFE_METHODS (GET, HEAD, OPTIONS)
-        if request.method in SAFE_METHODS:
-            return True
-
-        # Allow write access only if the user is the object owner
-        return obj.created_by == request.user
-
-
-class DomainViewSet(ModelViewSet):
     queryset = Domain.objects.all()
-    serializer_class = DomainSerializer
-    permission_classes = [IsOwnerOrReadOnly]
+    serializer_class = DomainDropdownSerializer
+    permission_classes = [IsAuthenticated]
 
-    @action(detail=False, methods=["get"])
-    def choices(self, request):
-        queryset = request.user.domain_membership.all()
-        serializer = DomainSerializer(queryset, many=True)
-        return Response(serializer.data)
+
+class PriorityDropdownViewSet(ReadOnlyModelViewSet):
+
+    queryset = Priority.objects.all()
+    serializer_class = PriorityDropdownSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class StatusDropdownViewSet(ReadOnlyModelViewSet):
+
+    queryset = Status.objects.all()
+    serializer_class = StatusDropdownSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class ProjectFilter(filters.FilterSet):
+    """
+    FilterSet for Project model
+    """
+
+    class Meta:
+        model = Project
+        fields = ["title", "start_date", "end_date", "status", "priority"]
 
 
 class ProjectViewSet(LoggingMixin, ModelViewSet):
@@ -48,6 +58,14 @@ class ProjectViewSet(LoggingMixin, ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
+
+    # lookup_field = "uuid"
+
+    filterset_class = ProjectFilter
+    # Fields that can be searched using ?search=query
+    search_fields = ["title", "description"]
+    # Default ordering
+    ordering = ["-priority", "end_date", "status"]
 
     def get_queryset(self):
         current_user = self.request.user
@@ -74,10 +92,32 @@ class ProjectViewSet(LoggingMixin, ModelViewSet):
         return Response(formatted_choices)
 
 
+class TaskFilter(filters.FilterSet):
+    """
+    FilterSet for Task model
+    """
+
+    User = get_user_model()
+
+    assigned_to = filters.ModelChoiceFilter(
+        queryset=User.objects.all(),
+        null_label="Unassigned",  # Allows filtering for null values
+    )
+
+    class Meta:
+        model = Task
+        fields = ["title", "description", "assigned_to", "status", "priority"]
+
+
 class TaskViewSet(LoggingMixin, ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
+
+    filterset_class = TaskFilter
+    search_fields = ["title", "description"]
+    ordering_fields = ["title", "start_date", "end_date", "status", "priority"]
+    ordering = ["-priority", "end_date", "status"]
 
     @action(detail=False, methods=["get"])
     def current_user_domain(self, request):
@@ -96,11 +136,12 @@ class TaskViewSet(LoggingMixin, ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"])
-    def current_user(self, request):
+    def me(self, request):
         # Get tasks assigned to the current user
         user = request.user
-        tasks = Task.objects.assigned_to_user(user.id)
-        serializer = self.get_serializer(tasks, many=True)
+        queryset = Task.objects.assigned_to_user(user.id)
+        filtered_queryset = self.filter_queryset(queryset)
+        serializer = self.get_serializer(filtered_queryset, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=["get"])

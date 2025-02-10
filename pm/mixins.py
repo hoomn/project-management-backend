@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
 from django.db import models
 from django.conf import settings
@@ -14,7 +15,8 @@ from .utils import get_change_message
 
 from uuid import uuid4
 
-USER = settings.AUTH_USER_MODEL
+
+User = get_user_model()
 
 
 class BaseItemMixin(TimestampMixin):
@@ -22,55 +24,35 @@ class BaseItemMixin(TimestampMixin):
     Common fields for projects, tasks, and subtasks models
     """
 
-    class Priority_Choices(models.IntegerChoices):
-        """
-        Priority Choices for Project, Task, and Subtask
-        """
-
-        CRITICAL = 6, "Critical"
-        HIGH = 5, "High"
-        UPPER_MEDIUM = 4, "Upper Medium"
-        MEDIUM = 3, "Medium"
-        LOWER_MEDIUM = 2, "Lower Medium"
-        LOW = 1, "Low"
-
-    class Status_Choices(models.IntegerChoices):
-        """
-        Status Choices for Project, Task, and Subtask
-        """
-
-        DONE = 1, "Done"
-        READY = 2, "Ready"
-        ON_TRACK = 3, "On Track"
-        OFF_TRACK = 4, "Off Track"
-        ON_HOLD = 5, "On Hold"
-        NOT_STARTED = 6, "Not Started"
-
     uuid = models.UUIDField(unique=True, editable=False, default=uuid4)
-    title = models.CharField(verbose_name="Title", max_length=128)
-    description = models.TextField(verbose_name="Description", blank=True, null=True)
-    start_date = models.DateField(verbose_name="Start Date", blank=True, null=True)
-    end_date = models.DateField(verbose_name="End Date", blank=True, null=True)
-    status = models.PositiveSmallIntegerField(
-        verbose_name="Status",
-        choices=Status_Choices,
-        default=Status_Choices.NOT_STARTED,
+    title = models.CharField(verbose_name="title", max_length=128)
+    description = models.TextField(verbose_name="description", blank=True, null=True)
+    start_date = models.DateField(verbose_name="start date", blank=True, null=True)
+    end_date = models.DateField(verbose_name="end date", blank=True, null=True)
+    status = models.ForeignKey(
+        to="status",
+        verbose_name="status",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
     )
-    priority = models.PositiveSmallIntegerField(
-        verbose_name="Priority",
-        choices=Priority_Choices,
-        default=Priority_Choices.MEDIUM,
+    priority = models.ForeignKey(
+        to="priority",
+        verbose_name="priority",
+        blank=True,
+        null=True,
+        on_delete=models.PROTECT,
     )
-    is_archived = models.BooleanField(verbose_name="Has been archived", default=False)
+    is_archived = models.BooleanField(verbose_name="has been archived", default=False)
     assigned_to = models.ManyToManyField(
-        USER,
-        verbose_name="Assigned to",
+        User,
+        verbose_name="assigned to",
         blank=True,
         related_name="%(class)s_assigned_to",
     )
     created_by = models.ForeignKey(
-        USER,
-        verbose_name="Created by",
+        User,
+        verbose_name="created by",
         blank=True,
         null=True,
         related_name="%(class)s_created_by",
@@ -83,7 +65,7 @@ class BaseItemMixin(TimestampMixin):
 
     class Meta:
         abstract = True
-        ordering = ["-status", models.F("end_date").asc(nulls_last=True), "-priority"]
+        ordering = ["-status__pk", models.F("end_date").asc(nulls_last=True), "-priority__pk"]
 
     def __str__(self):
         return self.title.title()
@@ -111,7 +93,12 @@ class BaseItemMixin(TimestampMixin):
 
     @property
     def is_overdue(self):
-        if self.status == self.Status_Choices.DONE or self.end_date is None:
+        try:
+            Status = apps.get_model("pm", "status")
+            done = Status.objects.get(title="Done")
+        except:
+            return None
+        if self.status == done or self.end_date is None:
             return False
         return timezone.localdate() > self.end_date
 
@@ -134,7 +121,7 @@ class BaseItemMixin(TimestampMixin):
     def get_absolute_url(self):
         if self.is_archived:
             return None
-        return f"/{self.get_class_name()}s/{self.id}"
+        return f"/{self.get_class_name().lower()}s/{self.id}"
 
     def get_comment_count(self):
         Comment = apps.get_model("pm", "comment")
@@ -161,8 +148,8 @@ class BaseGenericMixin(TimestampMixin):
     content_object = GenericForeignKey("content_type", "object_id")
     is_updated = models.BooleanField(default=False)
     created_by = models.ForeignKey(
-        USER,
-        verbose_name="Created by",
+        User,
+        verbose_name="created by",
         blank=True,
         null=True,
         related_name="%(class)s_created_by",
