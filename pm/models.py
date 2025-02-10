@@ -1,7 +1,9 @@
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth import get_user_model
 from django.conf import settings
+
 
 from core.mixins import TimestampMixin
 
@@ -20,7 +22,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-USER = settings.AUTH_USER_MODEL
+User = get_user_model()
 
 
 class Attachment(BaseGenericMixin):
@@ -133,10 +135,40 @@ class Domain(TimestampMixin):
     uuid = models.UUIDField(unique=True, editable=False, default=uuid4)
     title = models.CharField(max_length=128, unique=True)
     description = models.TextField(blank=True, null=True)
-    members = models.ManyToManyField(USER, blank=True, related_name="%(class)s_membership")
+    members = models.ManyToManyField(User, blank=True, related_name="%(class)s_membership")
     created_by = models.ForeignKey(
-        USER, blank=True, null=True, related_name="%(class)s_created_by", on_delete=models.SET_NULL
+        User, blank=True, null=True, related_name="%(class)s_created_by", on_delete=models.SET_NULL
     )
+
+    def __str__(self):
+        return self.title
+
+
+class Priority(TimestampMixin):
+    """
+    Priority Options for Project, Task, and Subtask
+    """
+
+    title = models.CharField(max_length=32, unique=True)
+
+    class Meta:
+        verbose_name = "priority"
+        verbose_name_plural = "priorities"
+
+    def __str__(self):
+        return self.title
+
+
+class Status(TimestampMixin):
+    """
+    Status Options for Project, Task, and Subtask
+    """
+
+    title = models.CharField(max_length=32, unique=True)
+
+    class Meta:
+        verbose_name = "status"
+        verbose_name_plural = "statuses"
 
     def __str__(self):
         return self.title
@@ -157,7 +189,13 @@ class Project(BaseItemMixin):
     objects = ProjectManager()
 
     class Meta(BaseItemMixin.Meta):
-        constraints = [models.UniqueConstraint(fields=["domain", "title"], name="unique_domain_title")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["domain", "title"],
+                condition=models.Q(is_archived=False),
+                name="unique_domain_title_not_archived",
+            )
+        ]
 
     def archive(self):
         super().archive()
