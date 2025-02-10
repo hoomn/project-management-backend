@@ -78,6 +78,16 @@ class ItemModelAdmin(ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+@admin.register(Priority)
+class PriorityAdmin(ModelAdmin):
+    list_display = ("id", "title")
+
+
+@admin.register(Status)
+class StatusAdmin(ModelAdmin):
+    list_display = ("id", "title")
+
+
 @admin.register(Project)
 class ProjectAdmin(ItemModelAdmin):
     list_display = ("domain",)
