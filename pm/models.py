@@ -94,7 +94,7 @@ class Activity(NotificationMixin):
                 return related_obj.get_verbose_name()
         return self._meta.verbose_name
 
-    def get_absolute_url(self):
+    def get_related_url(self):
         if self.content_object:
             related_obj = self.content_object
             if hasattr(related_obj, "get_absolute_url"):
