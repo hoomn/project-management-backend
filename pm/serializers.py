@@ -169,12 +169,16 @@ class AttachmentSerializer(ModelSerializer):
 class ActivitySerializer(ModelSerializer):
     content_type = SerializerMethodField()
     description = SerializerMethodField()
+    url = SerializerMethodField()
 
     def get_content_type(self, obj):
         return obj.content_type.model if obj.content_type else None
 
     def get_description(self, obj):
         return get_activity_description(obj)
+
+    def get_url(self, obj):
+        return obj.get_related_url()
 
     class Meta:
         model = Activity
@@ -184,6 +188,7 @@ class ActivitySerializer(ModelSerializer):
             "content_type",
             "object_id",
             "description",
+            "url",
             "created_by",
             "time_since_creation",
         ]
