@@ -25,6 +25,20 @@ class DomainDropdownViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
+class ProjectDropdownViewSet(ReadOnlyModelViewSet):
+
+    queryset = Project.objects.all()
+    serializer_class = DomainDropdownSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class TaskDropdownViewSet(ReadOnlyModelViewSet):
+
+    queryset = Task.objects.all()
+    serializer_class = DomainDropdownSerializer
+    permission_classes = [IsAuthenticated]
+
+
 class PriorityDropdownViewSet(ReadOnlyModelViewSet):
 
     queryset = Priority.objects.all()
