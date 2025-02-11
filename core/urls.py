@@ -24,7 +24,8 @@ from rest_framework.routers import DefaultRouter
 from accounts.views import UserDropdownViewSet, TokenValidationViewSet
 from pm.views import ProjectViewSet, TaskViewSet, SubtaskViewSet
 from pm.views import CommentViewSet, AttachmentViewSet, ActivityViewSet
-from pm.views import DomainDropdownViewSet, PriorityDropdownViewSet, StatusDropdownViewSet
+from pm.views import DomainDropdownViewSet, ProjectDropdownViewSet, TaskDropdownViewSet
+from pm.views import PriorityDropdownViewSet, StatusDropdownViewSet
 
 from notifications.views import NotificationViewSet
 from todo.views import TodoViewSet
@@ -38,9 +39,10 @@ router = DefaultRouter()
 router.register(r"users/token/validation", TokenValidationViewSet, basename="token-validation")
 router.register(r"options/user", UserDropdownViewSet, basename="user-options")
 router.register(r"options/domain", DomainDropdownViewSet, basename="domain-options")
+router.register(r"options/project", ProjectDropdownViewSet, basename="project-options")
+router.register(r"options/task", TaskDropdownViewSet, basename="task-options")
 router.register(r"options/priority", PriorityDropdownViewSet, basename="priority-options")
 router.register(r"options/status", StatusDropdownViewSet, basename="status-options")
-
 router.register(r"projects", ProjectViewSet)
 router.register(r"tasks", TaskViewSet)
 router.register(r"subtasks", SubtaskViewSet)
