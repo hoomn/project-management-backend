@@ -67,13 +67,7 @@ class EmailLog(models.Model):
         SUCCESS = 1, "Succeed"
 
     email = models.CharField(max_length=100)
+    subject = models.CharField(max_length=100, blank=True, null=True)
     status = models.PositiveSmallIntegerField(choices=Status, default=Status.FAIL)
-    description = models.CharField(max_length=128)
+    description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        # Truncate description if it exceeds 128 characters
-        if len(self.description) > 128:
-            self.description = self.description[:128]
-
-        super().save(*args, **kwargs)

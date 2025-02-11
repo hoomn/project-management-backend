@@ -22,7 +22,7 @@ class NotificationAdmin(ModelAdmin):
 
 @admin.register(EmailLog)
 class EmailLogAdmin(ReadOnlyAdmin):
-    list_display = ["email", "status", "description", "created_at"]
+    list_display = ["email", "subject", "status", "description", "created_at"]
 
 
 @admin.register(Category)
