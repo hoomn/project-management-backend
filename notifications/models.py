@@ -33,8 +33,8 @@ class Notification(TimestampMixin):
     def get_related_url(self):
         if self.content_object:
             related_obj = self.content_object
-            if hasattr(related_obj, "get_absolute_url"):
-                return related_obj.get_absolute_url()
+            if hasattr(related_obj, "get_related_url"):
+                return related_obj.get_related_url()
         return None
 
     class Meta:
