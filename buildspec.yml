@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - echo "========================================="
+      - echo "🔒 Replacing SSL certificate ARN..."
+      - 'sed -i "s|SSLCertificateArns:.*|SSLCertificateArns: ${SSL_Certificate_Arns}|" .ebextensions/02-alb-secure-listener.config'
+      - echo "SSL certificate ARN replaced successfully."
+      - echo "========================================="
+
+artifacts:
+  files:
+    - "**/*"
