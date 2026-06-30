@@ -129,6 +129,7 @@ INSTALLED_APPS = [
     "notifications",
     "pm",
     "todo",
+    "secretshare",
 ]
 
 MIDDLEWARE = [
