@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from django.conf import settings
+
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from djoser.serializers import SendEmailResetSerializer
 
@@ -16,9 +18,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
 
-        # Remove recaptcha from attrs and validate
-        recaptcha_token = attrs.pop("recaptcha", None)
-        validate_recaptcha(recaptcha_token)
+        if settings.DEBUG == False:
+
+            # Remove recaptcha from attrs and validate
+            recaptcha_token = attrs.pop("recaptcha", None)
+            validate_recaptcha(recaptcha_token)
 
         # Validate credentials using parent class
         return super().validate(attrs)
@@ -42,8 +46,12 @@ class CustomSendEmailResetSerializer(SendEmailResetSerializer):
 
     def validate(self, attrs):
 
-        # Remove recaptcha from attrs and validate
-        recaptcha_token = attrs.pop("recaptcha", None)
-        validate_recaptcha(recaptcha_token)
+        print(">>>>>> validating....")
+
+        if settings.DEBUG == False:
+
+            # Remove recaptcha from attrs and validate
+            recaptcha_token = attrs.pop("recaptcha", None)
+            validate_recaptcha(recaptcha_token)
 
         return super().validate(attrs)
